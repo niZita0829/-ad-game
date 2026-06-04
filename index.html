@@ -1,176 +1,150 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Mobile RPG Idle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mini Mario Style Game</title>
+
 <style>
 body{
   margin:0;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:#0b0f2a;
-  color:white;
-  font-family:Arial;
-}
-
-#app{
-  width:320px;
-  background:rgba(255,255,255,0.05);
-  padding:20px;
-  border-radius:15px;
-  text-align:center;
-}
-
-button{
-  margin:6px;
-  padding:10px 15px;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-#battleBtn{background:#4cafef;color:white;}
-#gachaBtn{background:#ff4d6d;color:white;}
-#healBtn{background:#ffd166;}
-
-.bar{
-  width:100%;
-  height:10px;
-  background:#222;
-  border-radius:10px;
   overflow:hidden;
-  margin:10px 0;
+  background:#87CEEB;
 }
 
-.fill{
-  height:100%;
-  width:100%;
-  background:red;
-  transition:0.2s;
+/* 横画面前提 */
+#game {
+  position:relative;
+  width:100vw;
+  height:100vh;
 }
 
-#log{
-  margin-top:10px;
-  font-size:13px;
-  color:#aaa;
+/* プレイヤー */
+#player{
+  position:absolute;
+  bottom:80px;
+  left:80px;
+  width:40px;
   height:40px;
+  background:red;
+  border-radius:5px;
+}
+
+/* 地面 */
+#ground{
+  position:absolute;
+  bottom:0;
+  width:200%;
+  height:80px;
+  background:green;
+}
+
+/* 敵 */
+.enemy{
+  position:absolute;
+  bottom:80px;
+  width:40px;
+  height:40px;
+  background:black;
+}
+
+/* ゴール */
+#goal{
+  position:absolute;
+  bottom:80px;
+  right:100px;
+  width:40px;
+  height:80px;
+  background:gold;
+}
+
+/* UI */
+#ui{
+  position:absolute;
+  top:10px;
+  left:10px;
+  color:white;
+  font-size:18px;
+  text-shadow:1px 1px 2px black;
 }
 </style>
 </head>
 
 <body>
 
-<div id="app">
-<h2>⚔️ Idle RPG Mobile ⚔️</h2>
+<div id="game">
 
-<div>💎 Gems: <span id="gems">0</span></div>
-<div>❤️ HP: <span id="hp">100</span>/100</div>
-<div>👹 Boss HP</div>
+<div id="ui">Score: <span id="score">0</span></div>
 
-<div class="bar">
-  <div class="fill" id="bossHp"></div>
-</div>
+<div id="player"></div>
+<div id="ground"></div>
+<div id="goal"></div>
 
-<button id="battleBtn" onclick="battle()">BATTLE</button>
-<button id="gachaBtn" onclick="gacha()">GACHA (10)</button>
-<button id="healBtn" onclick="heal()">HEAL (5)</button>
+<div class="enemy" style="left:300px;"></div>
+<div class="enemy" style="left:600px;"></div>
+<div class="enemy" style="left:900px;"></div>
 
-<div id="log"></div>
 </div>
 
 <script>
 
-let gems = 0;
-let hp = 100;
+let player = document.getElementById("player");
+let score = 0;
 
-let bossMax = 120;
-let bossHp = bossMax;
+let isJumping = false;
+let posY = 0;
+let velocity = 0;
 
-let atk = 8;
-let healCount = 3;
+let enemies = document.querySelectorAll(".enemy");
 
-const items = [
-  {name:"Knight Sword", atk:8},
-  {name:"Holy Blade", atk:15},
-  {name:"Dragon Fang", atk:25},
-  {name:"DIVINE EX 🔥", atk:50}
-];
+document.body.addEventListener("touchstart", jump);
+document.body.addEventListener("click", jump);
 
-function update(){
-  document.getElementById("gems").innerText = gems;
-  document.getElementById("hp").innerText = hp;
-  document.getElementById("bossHp").style.width = (bossHp/bossMax*100)+"%";
+function jump(){
+  if(isJumping) return;
+
+  isJumping = true;
+  velocity = 15;
 }
 
-function battle(){
+function gameLoop(){
 
-  if(hp <= 0){
-    log("You are defeated... wait for heal");
-    return;
+  // ジャンプ物理
+  if(isJumping){
+    posY += velocity;
+    velocity -= 1;
+
+    if(posY <= 0){
+      posY = 0;
+      isJumping = false;
+    }
+
+    player.style.bottom = (80 + posY) + "px";
   }
 
-  bossHp -= atk;
-  gems += 2;
+  // 敵との当たり判定
+  enemies.forEach(e=>{
+    let ex = e.offsetLeft;
+    let px = player.offsetLeft;
 
-  // boss attack
-  hp -= Math.floor(Math.random()*10);
+    if(Math.abs(ex - px) < 30 && posY < 30){
+      score = 0;
+    }
+  });
 
-  if(bossHp <= 0){
-    log("🏆 Boss cleared! Reward +30 gems");
-    gems += 30;
-    nextBoss();
+  // ゴール判定
+  let goal = document.getElementById("goal");
+  if(goal.offsetLeft - player.offsetLeft < 40){
+    score += 10;
+    goal.style.right = Math.random()*300 + "px";
   }
 
-  if(hp <= 0){
-    hp = 0;
-    log("💀 You lost! Use HEAL");
-  }
+  document.getElementById("score").innerText = score;
 
-  update();
+  requestAnimationFrame(gameLoop);
 }
 
-function gacha(){
-  if(gems < 10){
-    log("Not enough gems");
-    return;
-  }
-
-  gems -= 10;
-
-  const item = items[Math.floor(Math.random()*items.length)];
-  atk = item.atk;
-
-  log("🎰 Got: " + item.name + " ATK " + item.atk);
-
-  update();
-}
-
-function heal(){
-  if(healCount <= 0){
-    log("No heals left today");
-    return;
-  }
-
-  hp = 100;
-  healCount--;
-
-  log("❤️ Healed!");
-  update();
-}
-
-function nextBoss(){
-  bossMax += 50;
-  bossHp = bossMax;
-}
-
-function log(t){
-  document.getElementById("log").innerText = t;
-}
-
-update();
+gameLoop();
 
 </script>
 
