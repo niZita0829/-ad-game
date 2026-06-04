@@ -3,19 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Mini Mario Style Game</title>
+<title>Mini Mario Complete</title>
 
 <style>
 body{
   margin:0;
   overflow:hidden;
   background:#87CEEB;
+  font-family:Arial;
 }
 
-/* 横画面前提 */
-#game {
+#game{
   position:relative;
   width:100vw;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* ワールド（カメラで動かす） */
+#world{
+  position:absolute;
+  width:3000px;
   height:100vh;
 }
 
@@ -23,7 +31,7 @@ body{
 #player{
   position:absolute;
   bottom:80px;
-  left:80px;
+  left:100px;
   width:40px;
   height:40px;
   background:red;
@@ -31,10 +39,10 @@ body{
 }
 
 /* 地面 */
-#ground{
+.ground{
   position:absolute;
   bottom:0;
-  width:200%;
+  width:3000px;
   height:80px;
   background:green;
 }
@@ -48,23 +56,32 @@ body{
   background:black;
 }
 
+/* コイン */
+.coin{
+  position:absolute;
+  bottom:140px;
+  width:20px;
+  height:20px;
+  background:gold;
+  border-radius:50%;
+}
+
 /* ゴール */
 #goal{
   position:absolute;
   bottom:80px;
-  right:100px;
+  left:2800px;
   width:40px;
   height:80px;
-  background:gold;
+  background:yellow;
 }
 
 /* UI */
 #ui{
-  position:absolute;
+  position:fixed;
   top:10px;
   left:10px;
   color:white;
-  font-size:18px;
   text-shadow:1px 1px 2px black;
 }
 </style>
@@ -74,77 +91,124 @@ body{
 
 <div id="game">
 
-<div id="ui">Score: <span id="score">0</span></div>
+<div id="ui">
+Score: <span id="score">0</span> |
+Coins: <span id="coins">0</span>
+</div>
+
+<div id="world">
 
 <div id="player"></div>
-<div id="ground"></div>
+
+<div class="ground"></div>
+
+<!-- 敵 -->
+<div class="enemy" style="left:600px;"></div>
+<div class="enemy" style="left:1000px;"></div>
+<div class="enemy" style="left:1600px;"></div>
+
+<!-- コイン -->
+<div class="coin" style="left:500px;"></div>
+<div class="coin" style="left:900px;"></div>
+<div class="coin" style="left:1300px;"></div>
+<div class="coin" style="left:2000px;"></div>
+
 <div id="goal"></div>
 
-<div class="enemy" style="left:300px;"></div>
-<div class="enemy" style="left:600px;"></div>
-<div class="enemy" style="left:900px;"></div>
+</div>
 
 </div>
 
 <script>
 
+let world = document.getElementById("world");
 let player = document.getElementById("player");
+
 let score = 0;
+let coins = 0;
 
-let isJumping = false;
-let posY = 0;
-let velocity = 0;
+// プレイヤー状態
+let y = 0;
+let v = 0;
+let jumping = false;
 
-let enemies = document.querySelectorAll(".enemy");
+// カメラ位置
+let cameraX = 0;
 
+// 操作
 document.body.addEventListener("touchstart", jump);
 document.body.addEventListener("click", jump);
 
 function jump(){
-  if(isJumping) return;
-
-  isJumping = true;
-  velocity = 15;
+  if(jumping) return;
+  jumping = true;
+  v = 16;
 }
 
-function gameLoop(){
+function loop(){
 
-  // ジャンプ物理
-  if(isJumping){
-    posY += velocity;
-    velocity -= 1;
+  let enemies = document.querySelectorAll(".enemy");
+  let coinEls = document.querySelectorAll(".coin");
+  let goal = document.getElementById("goal");
 
-    if(posY <= 0){
-      posY = 0;
-      isJumping = false;
+  // ジャンプ
+  if(jumping){
+    y += v;
+    v -= 1;
+
+    if(y <= 0){
+      y = 0;
+      jumping = false;
     }
 
-    player.style.bottom = (80 + posY) + "px";
+    player.style.bottom = (80 + y) + "px";
   }
 
-  // 敵との当たり判定
-  enemies.forEach(e=>{
-    let ex = e.offsetLeft;
-    let px = player.offsetLeft;
+  // スクロール（カメラ）
+  cameraX += 3;
+  world.style.transform = `translateX(${-cameraX}px)`;
 
-    if(Math.abs(ex - px) < 30 && posY < 30){
+  let px = cameraX + 100;
+
+  // 敵処理
+  enemies.forEach(e=>{
+    let ex = parseInt(e.style.left);
+
+    // 当たり判定
+    if(Math.abs(ex - px) < 30 && y < 20){
       score = 0;
     }
   });
 
-  // ゴール判定
-  let goal = document.getElementById("goal");
-  if(goal.offsetLeft - player.offsetLeft < 40){
-    score += 10;
-    goal.style.right = Math.random()*300 + "px";
+  // コイン取得
+  coinEls.forEach(c=>{
+    let cx = parseInt(c.style.left);
+
+    if(Math.abs(cx - px) < 30 && !c.classList.contains("get")){
+      c.classList.add("get");
+      c.style.display = "none";
+      coins++;
+      score += 10;
+    }
+  });
+
+  // ゴール
+  let gx = goal.offsetLeft;
+  if(gx - cameraX < 100){
+    score += 50;
+    alert("CLEAR!");
+    location.reload();
   }
 
-  document.getElementById("score").innerText = score;
+  score++;
 
-  requestAnimationFrame(gameLoop);
+  document.getElementById("score").innerText = score;
+  document.getElementById("coins").innerText = coins;
+
+  requestAnimationFrame(loop);
 }
 
-gameLoop();
+loop();
 
 </script>
 
