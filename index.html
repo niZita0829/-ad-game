@@ -1,164 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Ultra Addictive Gacha Clicker</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: radial-gradient(circle, #0f0f1a, #000);
-      color: white;
-      font-family: Arial;
-      overflow: hidden;
-      flex-direction: column;
-      user-select: none;
-    }
+<meta charset="UTF-8">
+<title>Mobile RPG Idle</title>
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#0b0f2a;
+  color:white;
+  font-family:Arial;
+}
 
-    h1 {
-      font-size: 32px;
-      margin-bottom: 10px;
-    }
+#app{
+  width:320px;
+  background:rgba(255,255,255,0.05);
+  padding:20px;
+  border-radius:15px;
+  text-align:center;
+}
 
-    #stats {
-      font-size: 18px;
-      margin-bottom: 10px;
-      opacity: 0.8;
-    }
+button{
+  margin:6px;
+  padding:10px 15px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+}
 
-    button {
-      padding: 15px 25px;
-      font-size: 18px;
-      margin: 8px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
+#battleBtn{background:#4cafef;color:white;}
+#gachaBtn{background:#ff4d6d;color:white;}
+#healBtn{background:#ffd166;}
 
-    button:active {
-      transform: scale(0.95);
-    }
+.bar{
+  width:100%;
+  height:10px;
+  background:#222;
+  border-radius:10px;
+  overflow:hidden;
+  margin:10px 0;
+}
 
-    #tapBtn {
-      background: #4cafef;
-      color: white;
-    }
+.fill{
+  height:100%;
+  width:100%;
+  background:red;
+  transition:0.2s;
+}
 
-    #gachaBtn {
-      background: #ff4d6d;
-      color: white;
-    }
-
-    #result {
-      margin-top: 15px;
-      font-size: 20px;
-      color: gold;
-      height: 30px;
-    }
-
-    .float {
-      position: absolute;
-      font-size: 18px;
-      animation: floatUp 0.8s ease-out forwards;
-    }
-
-    @keyframes floatUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-120px); opacity: 0; }
-    }
-
-    .flash {
-      animation: flash 0.2s;
-    }
-
-    @keyframes flash {
-      0% { background: #000; }
-      50% { background: #222; }
-      100% { background: #000; }
-    }
-  </style>
+#log{
+  margin-top:10px;
+  font-size:13px;
+  color:#aaa;
+  height:40px;
+}
+</style>
 </head>
+
 <body>
 
-<h1>🔥 Ultra Gacha Clicker 🔥</h1>
+<div id="app">
+<h2>⚔️ Idle RPG Mobile ⚔️</h2>
 
-<div id="stats">Gems: 0 | Level: 1 | Luck: 1x</div>
+<div>💎 Gems: <span id="gems">0</span></div>
+<div>❤️ HP: <span id="hp">100</span>/100</div>
+<div>👹 Boss HP</div>
 
-<button id="tapBtn" onclick="tap(event)">TAP</button>
-<button id="gachaBtn" onclick="gacha()">GACHA (10 gems)</button>
+<div class="bar">
+  <div class="fill" id="bossHp"></div>
+</div>
 
-<div id="result"></div>
+<button id="battleBtn" onclick="battle()">BATTLE</button>
+<button id="gachaBtn" onclick="gacha()">GACHA (10)</button>
+<button id="healBtn" onclick="heal()">HEAL (5)</button>
+
+<div id="log"></div>
+</div>
 
 <script>
-  let gems = 0;
-  let level = 1;
 
-  const items = [
-    "Common Sword",
-    "Rare Shield",
-    "Epic Staff",
-    "Legendary Dragon",
-    "MYTHIC GOD 🔥"
-  ];
+let gems = 0;
+let hp = 100;
 
-  function update() {
-    document.getElementById("stats").innerText =
-      `Gems: ${gems} | Level: ${level} | Luck: ${1 + level * 0.1}x`;
+let bossMax = 120;
+let bossHp = bossMax;
+
+let atk = 8;
+let healCount = 3;
+
+const items = [
+  {name:"Knight Sword", atk:8},
+  {name:"Holy Blade", atk:15},
+  {name:"Dragon Fang", atk:25},
+  {name:"DIVINE EX 🔥", atk:50}
+];
+
+function update(){
+  document.getElementById("gems").innerText = gems;
+  document.getElementById("hp").innerText = hp;
+  document.getElementById("bossHp").style.width = (bossHp/bossMax*100)+"%";
+}
+
+function battle(){
+
+  if(hp <= 0){
+    log("You are defeated... wait for heal");
+    return;
   }
 
-  function tap(e) {
-    gems += 1;
+  bossHp -= atk;
+  gems += 2;
 
-    // レベルアップ（中毒ポイント①：成長）
-    if (gems % 20 === 0) {
-      level++;
-      document.body.classList.add("flash");
-      setTimeout(() => document.body.classList.remove("flash"), 200);
-    }
+  // boss attack
+  hp -= Math.floor(Math.random()*10);
 
-    update();
-
-    const f = document.createElement("div");
-    f.className = "float";
-    f.innerText = "+1";
-    f.style.left = e.clientX + "px";
-    f.style.top = e.clientY + "px";
-    document.body.appendChild(f);
-
-    setTimeout(() => f.remove(), 800);
+  if(bossHp <= 0){
+    log("🏆 Boss cleared! Reward +30 gems");
+    gems += 30;
+    nextBoss();
   }
 
-  function gacha() {
-    if (gems < 10) {
-      document.getElementById("result").innerText = "Need more gems...";
-      return;
-    }
-
-    gems -= 10;
-
-    // 中毒ポイント②：レベルで少しだけ確率変化
-    const luck = 1 + level * 0.1;
-    const roll = Math.random() * items.length * (1 / luck);
-    const item = items[Math.floor(Math.min(roll, items.length - 1))];
-
-    document.getElementById("result").innerText = "You got: " + item;
-
-    // 中毒ポイント③：レア演出
-    if (item.includes("Legendary") || item.includes("MYTHIC")) {
-      document.body.style.background = "radial-gradient(circle, gold, black)";
-      setTimeout(() => {
-        document.body.style.background = "radial-gradient(circle, #0f0f1a, #000)";
-      }, 600);
-    }
-
-    update();
+  if(hp <= 0){
+    hp = 0;
+    log("💀 You lost! Use HEAL");
   }
 
   update();
+}
+
+function gacha(){
+  if(gems < 10){
+    log("Not enough gems");
+    return;
+  }
+
+  gems -= 10;
+
+  const item = items[Math.floor(Math.random()*items.length)];
+  atk = item.atk;
+
+  log("🎰 Got: " + item.name + " ATK " + item.atk);
+
+  update();
+}
+
+function heal(){
+  if(healCount <= 0){
+    log("No heals left today");
+    return;
+  }
+
+  hp = 100;
+  healCount--;
+
+  log("❤️ Healed!");
+  update();
+}
+
+function nextBoss(){
+  bossMax += 50;
+  bossHp = bossMax;
+}
+
+function log(t){
+  document.getElementById("log").innerText = t;
+}
+
+update();
+
 </script>
 
 </body>
