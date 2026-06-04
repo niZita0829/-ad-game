@@ -2,10 +2,164 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Game Test</title>
+  <title>Ultra Addictive Gacha Clicker</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle, #0f0f1a, #000);
+      color: white;
+      font-family: Arial;
+      overflow: hidden;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    #stats {
+      font-size: 18px;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+
+    button {
+      padding: 15px 25px;
+      font-size: 18px;
+      margin: 8px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    #tapBtn {
+      background: #4cafef;
+      color: white;
+    }
+
+    #gachaBtn {
+      background: #ff4d6d;
+      color: white;
+    }
+
+    #result {
+      margin-top: 15px;
+      font-size: 20px;
+      color: gold;
+      height: 30px;
+    }
+
+    .float {
+      position: absolute;
+      font-size: 18px;
+      animation: floatUp 0.8s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-120px); opacity: 0; }
+    }
+
+    .flash {
+      animation: flash 0.2s;
+    }
+
+    @keyframes flash {
+      0% { background: #000; }
+      50% { background: #222; }
+      100% { background: #000; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Game is running</h1>
-  <p>If this appears, GitHub Pages is working.</p>
+
+<h1>🔥 Ultra Gacha Clicker 🔥</h1>
+
+<div id="stats">Gems: 0 | Level: 1 | Luck: 1x</div>
+
+<button id="tapBtn" onclick="tap(event)">TAP</button>
+<button id="gachaBtn" onclick="gacha()">GACHA (10 gems)</button>
+
+<div id="result"></div>
+
+<script>
+  let gems = 0;
+  let level = 1;
+
+  const items = [
+    "Common Sword",
+    "Rare Shield",
+    "Epic Staff",
+    "Legendary Dragon",
+    "MYTHIC GOD 🔥"
+  ];
+
+  function update() {
+    document.getElementById("stats").innerText =
+      `Gems: ${gems} | Level: ${level} | Luck: ${1 + level * 0.1}x`;
+  }
+
+  function tap(e) {
+    gems += 1;
+
+    // レベルアップ（中毒ポイント①：成長）
+    if (gems % 20 === 0) {
+      level++;
+      document.body.classList.add("flash");
+      setTimeout(() => document.body.classList.remove("flash"), 200);
+    }
+
+    update();
+
+    const f = document.createElement("div");
+    f.className = "float";
+    f.innerText = "+1";
+    f.style.left = e.clientX + "px";
+    f.style.top = e.clientY + "px";
+    document.body.appendChild(f);
+
+    setTimeout(() => f.remove(), 800);
+  }
+
+  function gacha() {
+    if (gems < 10) {
+      document.getElementById("result").innerText = "Need more gems...";
+      return;
+    }
+
+    gems -= 10;
+
+    // 中毒ポイント②：レベルで少しだけ確率変化
+    const luck = 1 + level * 0.1;
+    const roll = Math.random() * items.length * (1 / luck);
+    const item = items[Math.floor(Math.min(roll, items.length - 1))];
+
+    document.getElementById("result").innerText = "You got: " + item;
+
+    // 中毒ポイント③：レア演出
+    if (item.includes("Legendary") || item.includes("MYTHIC")) {
+      document.body.style.background = "radial-gradient(circle, gold, black)";
+      setTimeout(() => {
+        document.body.style.background = "radial-gradient(circle, #0f0f1a, #000)";
+      }, 600);
+    }
+
+    update();
+  }
+
+  update();
+</script>
+
 </body>
 </html>
